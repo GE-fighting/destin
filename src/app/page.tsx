@@ -8,49 +8,8 @@ import { useRouter } from 'next/navigation';
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [audioLoaded, setAudioLoaded] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const router = useRouter();
-
-  // 页面加载后尝试播放音乐
-  // useEffect(() => {
-  //   const audio = audioRef.current;
-  //   if (audio && audioLoaded) {
-  //     // 尝试自动播放
-  //     const playPromise = audio.play();
-  //     if (playPromise !== undefined) {
-  //       playPromise.then(() => {
-  //         setAudioPlaying(true);
-  //         console.log("Audio playing automatically");
-  //       }).catch(err => {
-  //         console.log("Audio autoplay was prevented:", err);
-  //       });
-  //     }
-  //   }
-  // }, [audioLoaded]);
-
-  // 添加用户交互时的播放尝试
-  // useEffect(() => {
-  //   const handleUserInteraction = () => {
-  //     const audio = audioRef.current;
-  //     if (audio && !audioPlaying && audioLoaded) {
-  //       audio.play().then(() => {
-  //         setAudioPlaying(true);
-  //         console.log("Audio playing after user interaction");
-  //       }).catch(err => {
-  //         console.log("Audio play was prevented even after interaction:", err);
-  //       });
-  //     }
-  //   };
-  //   document.addEventListener('click', handleUserInteraction);
-  //   document.addEventListener('touchstart', handleUserInteraction);
-  //   document.addEventListener('keydown', handleUserInteraction);
-  //   return () => {
-  //     document.removeEventListener('click', handleUserInteraction);
-  //     document.removeEventListener('touchstart', handleUserInteraction);
-  //     document.removeEventListener('keydown', handleUserInteraction);
-  //   };
-  // }, [audioPlaying, audioLoaded]);
 
   useEffect(() => {
     // Store current canvas ref at the beginning of the effect
@@ -1094,7 +1053,7 @@ export default function Home() {
         dialogGroup.scale.set(0.1, 0.1, 0.1);
         const targetScale = 1.3;
         scene.userData.animateFunctions = scene.userData.animateFunctions || [];
-        scene.userData.animateFunctions.push((_time: number) => {
+        scene.userData.animateFunctions.push(() => {
           if (dialogGroup.scale.x < targetScale) {
             dialogGroup.scale.x += 0.05;
             dialogGroup.scale.y += 0.05;
@@ -1815,7 +1774,6 @@ export default function Home() {
         loop
         preload="auto"
         style={{ display: 'none' }}
-        onCanPlayThrough={() => setAudioLoaded(true)}
       />
 
       <div className={styles.overlay}>
