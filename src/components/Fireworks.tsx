@@ -5,14 +5,14 @@ interface FireworksProps {
   show: boolean;
 }
 
-// 为星星添加类型定义
-interface Star {
-  x: number;
-  y: number;
-  size: number;
-  alpha: number;
-  blinkSpeed: number;
-}
+// 注释掉或删除未使用的Star接口
+// interface Star {
+//   x: number;
+//   y: number;
+//   size: number;
+//   alpha: number;
+//   blinkSpeed: number;
+// }
 
 export default function Fireworks({ show }: FireworksProps) {
   useEffect(() => {
@@ -33,8 +33,6 @@ export default function Fireworks({ show }: FireworksProps) {
     const ctx = fireworksCanvas.getContext('2d');
     if (!ctx) return;
     
-    let time = 0;
-    
     // 创建夜空背景，使其透明以便能看到Three.js场景
     const createBackground = () => {
       const gradient = ctx.createLinearGradient(0, 0, 0, fireworksCanvas.height);
@@ -45,32 +43,20 @@ export default function Fireworks({ show }: FireworksProps) {
     
     // 城市轮廓不再需要，因为Three.js场景已经提供了背景
     
-    // 创建星星
-    const createStars = () => {
-      const stars = [];
-      for (let i = 0; i < 200; i++) {
-        stars.push({
-          x: Math.random() * fireworksCanvas.width,
-          y: Math.random() * fireworksCanvas.height * 0.7,
-          size: Math.random() * 2,
-          alpha: Math.random() * 0.8 + 0.2,
-          blinkSpeed: Math.random() * 0.05
-        });
-      }
-      return stars;
-    };
-    
-    const drawStars = (stars: Star[], time: number) => {
-      stars.forEach(star => {
-        const alpha = star.alpha * (0.5 + 0.5 * Math.sin(time * star.blinkSpeed));
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    };
-    
-    const stars = createStars();
+    // 注释掉或删除未使用的函数
+    // const createStars = () => {
+    //   const stars = [];
+    //   for (let i = 0; i < 200; i++) {
+    //     stars.push({
+    //       x: Math.random() * fireworksCanvas.width,
+    //       y: Math.random() * fireworksCanvas.height * 0.7,
+    //       size: Math.random() * 2,
+    //       alpha: Math.random() * 0.8 + 0.2,
+    //       blinkSpeed: Math.random() * 0.05
+    //     });
+    //   }
+    //   return stars;
+    // };
     
     // 纯粹的烟花颗粒
     class FireworkParticle {
@@ -255,8 +241,6 @@ export default function Fireworks({ show }: FireworksProps) {
     
     // 动画循环
     const animate = () => {
-      time += 0.01;
-      
       // 每隔一段时间发射新烟花
       const now = Date.now();
       if (now - lastFireworkTime > fireworkInterval) {
@@ -276,9 +260,6 @@ export default function Fireworks({ show }: FireworksProps) {
       // 绘制背景
       ctx.fillStyle = createBackground();
       ctx.fillRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
-      
-      // 绘制星星 - 可以不需要，因为ThreeJS场景已经有星星
-      // drawStars(stars, time);
       
       // 更新和绘制所有烟花
       for (let i = fireworks.length - 1; i >= 0; i--) {

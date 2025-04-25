@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import styles from './Home.module.css';
 import { useRouter } from 'next/navigation';
 
@@ -11,11 +10,59 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [audioLoaded, setAudioLoaded] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
-  const [showFireworks, setShowFireworks] = useState(false);
-  const fireworksCanvasRef = useRef<HTMLCanvasElement>(null);
   const router = useRouter();
 
+  // 页面加载后尝试播放音乐
   useEffect(() => {
+    const audio = audioRef.current;
+    if (audio && audioLoaded) {
+      // 尝试自动播放
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          // 自动播放成功
+          setAudioPlaying(true);
+          console.log("Audio playing automatically");
+        }).catch(err => {
+          // 自动播放被阻止
+          console.log("Audio autoplay was prevented:", err);
+          // 不要设置audioPlaying为true，因为实际上没有播放
+        });
+      }
+    }
+  }, [audioLoaded]);
+
+  // 添加用户交互时的播放尝试
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      const audio = audioRef.current;
+      if (audio && !audioPlaying && audioLoaded) {
+        audio.play().then(() => {
+          setAudioPlaying(true);
+          console.log("Audio playing after user interaction");
+        }).catch(err => {
+          console.log("Audio play was prevented even after interaction:", err);
+        });
+      }
+    };
+
+    // 监听可能的用户交互事件
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+    document.addEventListener('keydown', handleUserInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+    };
+  }, [audioPlaying, audioLoaded]);
+
+  useEffect(() => {
+    // Store current canvas ref at the beginning of the effect
+    const currentCanvas = canvasRef.current;
+    
     // 创建Three.js场景
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -93,7 +140,6 @@ export default function Home() {
 
     // 创建路径的平面
     const pathWidth = 6;
-    const pathShape = new THREE.Shape();
     const extrudedCurvePoints = [];
     
     // 为路径创建一个具有宽度的管道
@@ -1059,7 +1105,8 @@ export default function Home() {
         dialogGroup.scale.set(0.1, 0.1, 0.1);
         const targetScale = 1.3; // 最终缩放比例
         scene.userData.animateFunctions = scene.userData.animateFunctions || [];
-        scene.userData.animateFunctions.push((time: number) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        scene.userData.animateFunctions.push((_time: number) => {
           if (dialogGroup.scale.x < targetScale) {
             dialogGroup.scale.x += 0.05;
             dialogGroup.scale.y += 0.05;
@@ -1086,7 +1133,7 @@ export default function Home() {
         if (dialogTimer > dialogDuration) {
           // 添加淡出效果
           if (dialogGroup.visible) {
-            const opacityAnimation = (time: number) => {
+            const opacityAnimation = (/* _time: number */) => {
               if (bubble.material.opacity > 0) {
                 bubble.material.opacity -= 0.01;
                 if (bubble.material.opacity <= 0) {
@@ -1688,8 +1735,8 @@ export default function Home() {
     
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (canvasRef.current) {
-        // Clean up
+      if (currentCanvas) {
+        // Use currentCanvas instead of canvasRef.current
         renderer.dispose();
         scene.clear();
       }
@@ -1702,489 +1749,19 @@ export default function Home() {
     if (!audio) return;
     
     if (audio.paused) {
-      audio.play();
-      setAudioPlaying(true);
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          setAudioPlaying(true);
+        }).catch(err => {
+          console.log("Could not play audio:", err);
+        });
+      }
     } else {
       audio.pause();
       setAudioPlaying(false);
     }
   };
-
-  // Fireworks animation
-  useEffect(() => {
-    if (!showFireworks) return;
-    
-    const fireworksCanvas = document.createElement('canvas');
-    fireworksCanvas.className = styles.fireworksCanvas;
-    document.body.appendChild(fireworksCanvas);
-    
-    fireworksCanvas.width = window.innerWidth;
-    fireworksCanvas.height = window.innerHeight;
-    
-    const ctx = fireworksCanvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Enhanced background for fireworks
-    const createBackgroundGradient = () => {
-      const gradient = ctx.createLinearGradient(0, 0, 0, fireworksCanvas.height);
-      gradient.addColorStop(0, '#0a001a'); // Deep purple at the top
-      gradient.addColorStop(0.4, '#140033'); // Rich navy in the middle
-      gradient.addColorStop(1, '#02001e'); // Very dark blue at bottom
-      return gradient;
-    };
-    
-    // Add city silhouette in background
-    const drawCitySkyline = () => {
-      ctx.fillStyle = '#000000';
-      
-      // Create buildings with different heights
-      const buildingCount = Math.ceil(fireworksCanvas.width / 40);
-      const maxHeight = fireworksCanvas.height * 0.3;
-      
-      for (let i = 0; i < buildingCount; i++) {
-        const width = 20 + Math.random() * 60;
-        const height = 50 + Math.random() * maxHeight;
-        const x = i * (fireworksCanvas.width / buildingCount);
-        const y = fireworksCanvas.height - height;
-        
-        ctx.beginPath();
-        ctx.rect(x, y, width, height);
-        ctx.fill();
-        
-        // Add windows to some buildings
-        if (Math.random() > 0.3) {
-          ctx.fillStyle = 'rgba(255, 255, 150, 0.3)';
-          const windowRows = Math.floor(height / 20);
-          const windowCols = Math.floor(width / 15);
-          
-          for (let r = 0; r < windowRows; r++) {
-            for (let c = 0; c < windowCols; c++) {
-              if (Math.random() > 0.4) { // Some windows are dark
-                ctx.fillRect(
-                  x + 5 + c * 15, 
-                  y + 5 + r * 20, 
-                  8, 12
-                );
-              }
-            }
-          }
-          ctx.fillStyle = '#000000';
-        }
-      }
-      
-      // Add mountains in the background
-      ctx.fillStyle = '#000516';
-      ctx.beginPath();
-      ctx.moveTo(0, fireworksCanvas.height);
-      
-      const mountainPoints = 8;
-      const segmentWidth = fireworksCanvas.width / mountainPoints;
-      
-      for (let i = 0; i <= mountainPoints; i++) {
-        const x = i * segmentWidth;
-        const y = fireworksCanvas.height - (Math.sin(i * 0.8) + 1) * 60 - Math.random() * 50;
-        ctx.lineTo(x, y);
-      }
-      
-      ctx.lineTo(fireworksCanvas.width, fireworksCanvas.height);
-      ctx.closePath();
-      ctx.fill();
-    };
-    
-    // Create stars in the background
-    const createStars = () => {
-      const stars = [];
-      for (let i = 0; i < 200; i++) {
-        stars.push({
-          x: Math.random() * fireworksCanvas.width,
-          y: Math.random() * fireworksCanvas.height * 0.7, // Stars only in the top 70%
-          size: Math.random() * 2,
-          alpha: Math.random() * 0.8 + 0.2,
-          blinkSpeed: Math.random() * 0.05
-        });
-      }
-      return stars;
-    };
-    
-    const drawStars = (stars: Array<{x: number, y: number, size: number, alpha: number, blinkSpeed: number}>, time: number) => {
-      stars.forEach(star => {
-        const alpha = star.alpha * (0.5 + 0.5 * Math.sin(time * star.blinkSpeed));
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    };
-    
-    const stars = createStars();
-    
-    // Particle class for fireworks
-    class Particle {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      alpha: number;
-      color: string;
-      size: number;
-      trail: {x: number, y: number, alpha: number}[];
-      decay: number;
-      gravity: number;
-      
-      constructor(x: number, y: number, color: string, explosionPower: number = 1) {
-        this.x = x;
-        this.y = y;
-        
-        // Create more variety in velocities for more chaotic explosions
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 7 * explosionPower + 2;
-        
-        this.vx = Math.cos(angle) * speed;
-        this.vy = Math.sin(angle) * speed;
-        this.alpha = 1;
-        this.color = color;
-        this.size = Math.random() * 3 + 1;
-        this.trail = [];
-        this.decay = Math.random() * 0.02 + 0.02; // Random decay rate
-        this.gravity = 0.08;
-      }
-      
-      update() {
-        this.vy += this.gravity; // Add gravity
-        
-        // Store current position in trail
-        this.trail.push({
-          x: this.x,
-          y: this.y,
-          alpha: this.alpha
-        });
-        
-        // Limit trail length
-        if (this.trail.length > 10) {
-          this.trail.shift();
-        }
-        
-        this.x += this.vx;
-        this.y += this.vy;
-        this.alpha -= this.decay;
-        
-        // Add slight spiraling
-        this.vx *= 0.99;
-        this.vy *= 0.99;
-        
-        return this.alpha > 0;
-      }
-      
-      draw(ctx: CanvasRenderingContext2D) {
-        // Draw trail
-        this.trail.forEach((point, i) => {
-          const trailAlpha = point.alpha * (i / this.trail.length);
-          ctx.globalAlpha = trailAlpha;
-          ctx.fillStyle = this.color;
-          ctx.beginPath();
-          ctx.arc(point.x, point.y, this.size * (i / this.trail.length), 0, Math.PI * 2);
-          ctx.fill();
-        });
-        
-        // Draw particle
-        ctx.globalAlpha = this.alpha;
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-      }
-    }
-    
-    // Firework class
-    class Firework {
-      x: number;
-      y: number;
-      targetY: number;
-      vx: number;
-      vy: number;
-      color: string;
-      size: number;
-      trail: {x: number, y: number}[];
-      particles: Particle[];
-      exploded: boolean;
-      type: string;
-      
-      constructor(startX: number, targetY: number) {
-        // Randomize starting position at bottom
-        this.x = startX || Math.random() * fireworksCanvas.width;
-        this.y = fireworksCanvas.height;
-        
-        // Target height
-        this.targetY = targetY || fireworksCanvas.height * 0.2 + Math.random() * fireworksCanvas.height * 0.5;
-        
-        // Calculate velocity to reach target
-        this.vx = (Math.random() - 0.5) * 3;
-        this.vy = -15 - Math.random() * 5; // Adjust for higher launch
-        
-        // Generate vibrant colors
-        const hue = Math.random() * 360;
-        this.color = `hsl(${hue}, 100%, 60%)`;
-        
-        this.size = 3;
-        this.trail = [];
-        this.particles = [];
-        this.exploded = false;
-        
-        // Different types of fireworks
-        const types = ['normal', 'ring', 'burst', 'shower', 'willow', 'multi'];
-        this.type = types[Math.floor(Math.random() * types.length)];
-      }
-      
-      update() {
-        // Add gravity
-        this.vy += 0.1;
-        
-        // Store position for trail
-        this.trail.push({
-          x: this.x,
-          y: this.y
-        });
-        
-        // Limit trail length
-        if (this.trail.length > 10) {
-          this.trail.shift();
-        }
-        
-        this.x += this.vx;
-        this.y += this.vy;
-        
-        // Check if reached target height or starting to fall
-        if (!this.exploded && this.vy >= 0) {
-          this.explode();
-        }
-        
-        // Update particles if exploded
-        if (this.exploded) {
-          this.particles = this.particles.filter(particle => particle.update());
-        }
-        
-        // Return false if finished
-        return !this.exploded || this.particles.length > 0;
-      }
-      
-      explode() {
-        this.exploded = true;
-        
-        // Different explosion patterns
-        const particleCount = 100 + Math.floor(Math.random() * 100); // More particles
-        
-        switch(this.type) {
-          case 'ring':
-            // Ring-shaped explosion
-            for (let i = 0; i < particleCount; i++) {
-              const angle = (i / particleCount) * Math.PI * 2;
-              const speed = 5 + Math.random() * 2;
-              const particle = new Particle(this.x, this.y, this.color, 1.5);
-              particle.vx = Math.cos(angle) * speed;
-              particle.vy = Math.sin(angle) * speed;
-              this.particles.push(particle);
-            }
-            break;
-            
-          case 'burst':
-            // Burst with different colors
-            for (let i = 0; i < particleCount; i++) {
-              const hue = Math.random() * 60 - 30 + parseInt(this.color.split('(')[1]);
-              const color = `hsl(${hue}, 100%, 60%)`;
-              const explosionPower = 1.8;
-              this.particles.push(new Particle(this.x, this.y, color, explosionPower));
-            }
-            break;
-            
-          case 'shower':
-            // Shower effect - mostly downward
-            for (let i = 0; i < particleCount; i++) {
-              const particle = new Particle(this.x, this.y, this.color, 1.3);
-              particle.vy = Math.abs(particle.vy) * 0.8; // Force downward
-              particle.gravity = 0.1; // Higher gravity
-              this.particles.push(particle);
-            }
-            break;
-            
-          case 'willow':
-            // Willow effect with slow fall
-            for (let i = 0; i < particleCount; i++) {
-              const particle = new Particle(this.x, this.y, this.color, 1.5);
-              particle.gravity = 0.02; // Lower gravity
-              particle.decay = 0.01; // Slower decay
-              particle.size = Math.random() * 2 + 0.5; // Smaller particles
-              this.particles.push(particle);
-            }
-            break;
-            
-          case 'multi':
-            // Multi-colored explosion
-            for (let i = 0; i < particleCount; i++) {
-              const hue = Math.random() * 360;
-              const color = `hsl(${hue}, 100%, 60%)`;
-              this.particles.push(new Particle(this.x, this.y, color, 1.4));
-            }
-            break;
-            
-          default:
-            // Normal explosion
-            for (let i = 0; i < particleCount; i++) {
-              this.particles.push(new Particle(this.x, this.y, this.color, 1.2));
-            }
-        }
-        
-        // Add secondary explosion chance
-        if (Math.random() < 0.3) {
-          setTimeout(() => {
-            const secondaryCount = 30 + Math.floor(Math.random() * 40);
-            const secondaryHue = (parseInt(this.color.split('(')[1]) + 180) % 360;
-            const secondaryColor = `hsl(${secondaryHue}, 100%, 60%)`;
-            
-            for (let i = 0; i < secondaryCount; i++) {
-              this.particles.push(new Particle(this.x, this.y, secondaryColor, 0.8));
-            }
-          }, 100 + Math.random() * 200);
-        }
-      }
-      
-      draw(ctx: CanvasRenderingContext2D) {
-        if (!this.exploded) {
-          // Draw trail
-          ctx.strokeStyle = this.color;
-          ctx.lineWidth = this.size;
-          ctx.beginPath();
-          ctx.moveTo(this.trail[0]?.x || this.x, this.trail[0]?.y || this.y);
-          
-          for (const point of this.trail) {
-            ctx.lineTo(point.x, point.y);
-          }
-          
-          ctx.stroke();
-          
-          // Draw rocket
-          ctx.fillStyle = this.color;
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.fill();
-          
-          // Draw glow
-          const glow = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 5);
-          glow.addColorStop(0, this.color);
-          glow.addColorStop(1, 'transparent');
-          
-          ctx.fillStyle = glow;
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size * 5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        
-        // Draw particles
-        for (const particle of this.particles) {
-          particle.draw(ctx);
-        }
-      }
-    }
-    
-    // Keep track of fireworks
-    const fireworks: Firework[] = [];
-    let lastFireworkTime = 0;
-    const fireworkInterval = 200; // Launch fireworks more frequently
-    let animationId: number;
-    let time = 0;
-    
-    // Animation loop
-    const animate = () => {
-      time += 0.01;
-      
-      // Add new fireworks
-      const now = Date.now();
-      if (now - lastFireworkTime > fireworkInterval) {
-        // Launch multiple fireworks at once for more intensity
-        const burstCount = Math.floor(Math.random() * 3) + 1;
-        for (let i = 0; i < burstCount; i++) {
-          const firework = new Firework(
-            Math.random() * fireworksCanvas.width,
-            Math.random() * fireworksCanvas.height * 0.5
-          );
-          fireworks.push(firework);
-        }
-        
-        lastFireworkTime = now;
-      }
-      
-      // Clear canvas with a semi-transparent overlay for trails
-      ctx.fillStyle = 'rgba(0, 0, 10, 0.2)';
-      ctx.fillRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
-      
-      // Draw background gradient for night sky effect
-      ctx.fillStyle = createBackgroundGradient();
-      ctx.fillRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
-      
-      // Draw stars
-      drawStars(stars, time);
-      
-      // Draw city skyline
-      drawCitySkyline();
-      
-      // Update and draw fireworks
-      for (let i = fireworks.length - 1; i >= 0; i--) {
-        if (!fireworks[i].update()) {
-          fireworks.splice(i, 1);
-        } else {
-          fireworks[i].draw(ctx);
-        }
-      }
-      
-      // Add screen reflections - subtle light on buildings
-      for (const firework of fireworks) {
-        if (firework.exploded && firework.particles.length > 50) {
-          const reflection = ctx.createRadialGradient(
-            firework.x, firework.y, 0, 
-            firework.x, firework.y, 300
-          );
-          
-          reflection.addColorStop(0, firework.color.replace('hsl', 'hsla').replace(')', ', 0.03)'));
-          reflection.addColorStop(1, 'transparent');
-          
-          ctx.fillStyle = reflection;
-          ctx.fillRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
-        }
-      }
-      
-      // Add subtle smoke effect in the air
-      ctx.fillStyle = 'rgba(30, 30, 30, 0.01)';
-      for (let i = 0; i < 5; i++) {
-        const x = Math.random() * fireworksCanvas.width;
-        const y = Math.random() * fireworksCanvas.height * 0.7;
-        const size = Math.random() * 100 + 50;
-        
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      
-      animationId = requestAnimationFrame(animate);
-    };
-    
-    animate();
-    
-    // Handle resize
-    const handleFireworksResize = () => {
-      fireworksCanvas.width = window.innerWidth;
-      fireworksCanvas.height = window.innerHeight;
-    };
-    
-    window.addEventListener('resize', handleFireworksResize);
-    
-    return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', handleFireworksResize);
-      if (fireworksCanvas && fireworksCanvas.parentNode) {
-        fireworksCanvas.parentNode.removeChild(fireworksCanvas);
-      }
-    };
-  }, [showFireworks]);
 
   // 处理"进入我们的世界"按钮点击
   const handleEnterClick = () => {
@@ -2193,25 +1770,60 @@ export default function Home() {
     
     // 如果音频文件存在，则尝试播放
     const audio = audioRef.current;
-    if (audio && audio.duration > 0) {
+    if (audio) {
       audio.play().catch(err => {
-        console.log("Audio autoplay was prevented:", err);
+        console.log("Audio play was prevented:", err);
       });
       setAudioPlaying(true);
     }
   };
 
+  // 在组件挂载时创建音频元素
+  useEffect(() => {
+    // 检查audioRef是否已经有值
+    if (!audioRef.current) {
+      const audioElement = new Audio("/music/M500000vyP282Pn71W.mp3");
+      audioElement.loop = true;
+      
+      // 设置预加载
+      audioElement.preload = "auto";
+      
+      // 设置加载事件
+      audioElement.addEventListener('loadeddata', () => {
+        console.log("音频已加载");
+        setAudioLoaded(true);
+        
+        // 尝试自动播放
+        try {
+          const playPromise = audioElement.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              console.log("音频自动播放成功");
+              setAudioPlaying(true);
+            }).catch(err => {
+              console.log("音频自动播放被阻止:", err);
+            });
+          }
+        } catch (e) {
+          console.log("音频播放出错:", e);
+        }
+      });
+      
+      audioRef.current = audioElement;
+    }
+    
+    // 组件卸载时处理音频
+    return () => {
+      const audioElement = audioRef.current;
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.src = "";
+      }
+    };
+  }, []);
+
   return (
     <div className={styles.container}>
-      {audioRef && audioRef.current && audioRef.current.duration > 0 && (
-        <audio
-          ref={audioRef}
-          src="/music/background-music.mp3"
-          loop
-          onCanPlayThrough={() => setAudioLoaded(true)}
-        />
-      )}
-
       <canvas ref={canvasRef} className={styles.canvas} />
 
       <div className={styles.overlay}>
@@ -2223,7 +1835,7 @@ export default function Home() {
             进入我的世界
           </button>
           
-          {audioLoaded && audioRef.current && audioRef.current.duration > 0 && (
+          {audioLoaded && (
             <button 
               className={`${styles.musicBtn} ${audioPlaying ? styles.playing : ''}`}
               onClick={toggleMusic}
