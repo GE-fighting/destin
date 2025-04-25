@@ -120,7 +120,7 @@ export default function World() {
   }, [audioLoaded]);
   
   // Text to be gradually displayed
-  const fullText = "可爱的蒲公英女孩，我们的旅程，从这里开始；每一步都将是新的发现，每一刻都是珍贵的回忆，希望我们每天开心、幸福~";
+  const fullText = "可爱的向日葵公主，我们的旅程，从这里开始；每一步都将是新的发现，每一刻都是珍贵的回忆，希望我们每天开心、幸福~";
   
   // 烟花和鲜花动画
   useEffect(() => {
