@@ -13,51 +13,44 @@ export default function Home() {
   const router = useRouter();
 
   // 页面加载后尝试播放音乐
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (audio && audioLoaded) {
-      // 尝试自动播放
-      const playPromise = audio.play();
-      
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          // 自动播放成功
-          setAudioPlaying(true);
-          console.log("Audio playing automatically");
-        }).catch(err => {
-          // 自动播放被阻止
-          console.log("Audio autoplay was prevented:", err);
-          // 不要设置audioPlaying为true，因为实际上没有播放
-        });
-      }
-    }
-  }, [audioLoaded]);
+  // useEffect(() => {
+  //   const audio = audioRef.current;
+  //   if (audio && audioLoaded) {
+  //     // 尝试自动播放
+  //     const playPromise = audio.play();
+  //     if (playPromise !== undefined) {
+  //       playPromise.then(() => {
+  //         setAudioPlaying(true);
+  //         console.log("Audio playing automatically");
+  //       }).catch(err => {
+  //         console.log("Audio autoplay was prevented:", err);
+  //       });
+  //     }
+  //   }
+  // }, [audioLoaded]);
 
   // 添加用户交互时的播放尝试
-  useEffect(() => {
-    const handleUserInteraction = () => {
-      const audio = audioRef.current;
-      if (audio && !audioPlaying && audioLoaded) {
-        audio.play().then(() => {
-          setAudioPlaying(true);
-          console.log("Audio playing after user interaction");
-        }).catch(err => {
-          console.log("Audio play was prevented even after interaction:", err);
-        });
-      }
-    };
-
-    // 监听可能的用户交互事件
-    document.addEventListener('click', handleUserInteraction);
-    document.addEventListener('touchstart', handleUserInteraction);
-    document.addEventListener('keydown', handleUserInteraction);
-
-    return () => {
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
-      document.removeEventListener('keydown', handleUserInteraction);
-    };
-  }, [audioPlaying, audioLoaded]);
+  // useEffect(() => {
+  //   const handleUserInteraction = () => {
+  //     const audio = audioRef.current;
+  //     if (audio && !audioPlaying && audioLoaded) {
+  //       audio.play().then(() => {
+  //         setAudioPlaying(true);
+  //         console.log("Audio playing after user interaction");
+  //       }).catch(err => {
+  //         console.log("Audio play was prevented even after interaction:", err);
+  //       });
+  //     }
+  //   };
+  //   document.addEventListener('click', handleUserInteraction);
+  //   document.addEventListener('touchstart', handleUserInteraction);
+  //   document.addEventListener('keydown', handleUserInteraction);
+  //   return () => {
+  //     document.removeEventListener('click', handleUserInteraction);
+  //     document.removeEventListener('touchstart', handleUserInteraction);
+  //     document.removeEventListener('keydown', handleUserInteraction);
+  //   };
+  // }, [audioPlaying, audioLoaded]);
 
   useEffect(() => {
     // Store current canvas ref at the beginning of the effect
@@ -952,13 +945,13 @@ export default function Home() {
     const pathSpeed = 0.00001; // 路径行走速度，从0.00005进一步减慢到0.00001
     
     // 添加对话气泡相关变量
-    let showDialog = false;
+    let dialogState = 0; // 0:无, 1:第一个, 2:第二个, 3:全部结束
     let dialogTimer = 0;
-    const dialogDuration = 5; // 对话显示5秒
-    
+    const dialogDuration = 5; // 第一个气泡显示5秒
+    let secondDialogTimer = 0;
+    const secondDialogDuration = 3; // 第二个气泡显示3秒
     // 创建对话气泡
     const dialogGroup = new THREE.Group();
-    
     // 创建气泡背景 - Instagram风格
     const bubbleGeometry = new THREE.PlaneGeometry(6, 3); // 保持大尺寸
     const bubbleTexture = new THREE.CanvasTexture(createDialogBubble("福州，我们来了~"));
@@ -1075,37 +1068,32 @@ export default function Home() {
                           personPathProgress < fuzhouScenePointIndex / points.length + 0.01;
       
       // 人物沿路径移动 - 在福州景点位置停下
-      if (!fuzhouReached) {
+      if (!fuzhouReached || dialogState === 3) {
         personPathProgress += pathSpeed * deltaTime * 1000;
         if (personPathProgress > 1) {
           personPathProgress = 0;
         }
-      } else if (!showDialog) {
-        // 到达福州景点并且还没显示过对话
-        showDialog = true;
+      } else if (dialogState === 0) {
+        // 显示第一个气泡
+        dialogState = 1;
         dialogGroup.visible = true;
-        
+        bubble.material.map = new THREE.CanvasTexture(createDialogBubble("福州，我们来了~"));
+        bubble.material.opacity = 0.95;
+        dialogTimer = 0;
         // 放置对话气泡在人物右上方
         const dialogPos = new THREE.Vector3(
           person1.position.x + (person2.position.x - person1.position.x) / 2,
           0,
           person1.position.z + (person2.position.z - person1.position.z) / 2
         );
-        
-        // 计算人物朝向的右上方位置
         const tangent = curve.getTangentAt(personPathProgress);
         const right = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize().multiplyScalar(3);
-        
         dialogGroup.position.copy(dialogPos);
-        // 向右上方偏移
         dialogGroup.position.add(right);
-        dialogGroup.position.y = 4.5; // 位置上移
-        
-        // 气泡出现动画
+        dialogGroup.position.y = 4.5;
         dialogGroup.scale.set(0.1, 0.1, 0.1);
-        const targetScale = 1.3; // 最终缩放比例
+        const targetScale = 1.3;
         scene.userData.animateFunctions = scene.userData.animateFunctions || [];
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         scene.userData.animateFunctions.push((_time: number) => {
           if (dialogGroup.scale.x < targetScale) {
             dialogGroup.scale.x += 0.05;
@@ -1113,21 +1101,59 @@ export default function Home() {
             dialogGroup.scale.z += 0.05;
           }
         });
-        
-        // 气泡轻微摆动动画
         scene.userData.animateFunctions.push((time: number) => {
           if (dialogGroup.visible) {
             dialogGroup.rotation.z = Math.sin(time * 0.5) * 0.05;
             dialogGroup.position.y = 4.5 + Math.sin(time * 0.7) * 0.1;
           }
         });
-        
-        // 让对话框面向相机
+        dialogGroup.lookAt(camera.position);
+      }
+      // 第一个气泡计时与淡出
+      if (dialogState === 1) {
+        dialogTimer += deltaTime;
+        if (dialogTimer > dialogDuration) {
+          bubble.material.opacity -= 0.01;
+          if (bubble.material.opacity <= 0) {
+            dialogState = 2;
+            dialogGroup.visible = false;
+            secondDialogTimer = 0;
+          }
+        }
+        dialogGroup.lookAt(camera.position);
+      }
+      // 第二个气泡显示与淡出
+      if (dialogState === 2) {
+        if (!dialogGroup.visible) {
+          dialogGroup.visible = true;
+          bubble.material.map = new THREE.CanvasTexture(createDialogBubble("让我们继续出发吧~"));
+          bubble.material.opacity = 0.95;
+          // 位置同第一个气泡
+          const dialogPos = new THREE.Vector3(
+            person1.position.x + (person2.position.x - person1.position.x) / 2,
+            0,
+            person1.position.z + (person2.position.z - person1.position.z) / 2
+          );
+          const tangent = curve.getTangentAt(personPathProgress);
+          const right = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize().multiplyScalar(3);
+          dialogGroup.position.copy(dialogPos);
+          dialogGroup.position.add(right);
+          dialogGroup.position.y = 4.5;
+          dialogGroup.scale.set(1.3, 1.3, 1.3);
+        }
+        secondDialogTimer += deltaTime;
+        if (secondDialogTimer > secondDialogDuration) {
+          bubble.material.opacity -= 0.01;
+          if (bubble.material.opacity <= 0) {
+            dialogGroup.visible = false;
+            dialogState = 3; // 允许人物继续前进
+          }
+        }
         dialogGroup.lookAt(camera.position);
       }
       
       // 管理对话的显示时间
-      if (showDialog) {
+      if (dialogState === 0) {
         dialogTimer += deltaTime;
         // 对话显示时间结束后，继续移动
         if (dialogTimer > dialogDuration) {
@@ -1778,73 +1804,37 @@ export default function Home() {
     }
   };
 
-  // 在组件挂载时创建音频元素
-  useEffect(() => {
-    // 检查audioRef是否已经有值
-    if (!audioRef.current) {
-      const audioElement = new Audio("/music/M500000vyP282Pn71W.mp3");
-      audioElement.loop = true;
-      
-      // 设置预加载
-      audioElement.preload = "auto";
-      
-      // 设置加载事件
-      audioElement.addEventListener('loadeddata', () => {
-        console.log("音频已加载");
-        setAudioLoaded(true);
-        
-        // 尝试自动播放
-        try {
-          const playPromise = audioElement.play();
-          if (playPromise !== undefined) {
-            playPromise.then(() => {
-              console.log("音频自动播放成功");
-              setAudioPlaying(true);
-            }).catch(err => {
-              console.log("音频自动播放被阻止:", err);
-            });
-          }
-        } catch (e) {
-          console.log("音频播放出错:", e);
-        }
-      });
-      
-      audioRef.current = audioElement;
-    }
-    
-    // 组件卸载时处理音频
-    return () => {
-      const audioElement = audioRef.current;
-      if (audioElement) {
-        audioElement.pause();
-        audioElement.src = "";
-      }
-    };
-  }, []);
-
   return (
     <div className={styles.container}>
       <canvas ref={canvasRef} className={styles.canvas} />
 
+      {/* 直接渲染 audio 元素，和 world 页一致 */}
+      <audio
+        ref={audioRef}
+        src="/music/M500000vyP282Pn71W.mp3"
+        loop
+        preload="auto"
+        style={{ display: 'none' }}
+        onCanPlayThrough={() => setAudioLoaded(true)}
+      />
+
       <div className={styles.overlay}>
         <h1 className={styles.title}>遇见 Destin</h1>
         <p className={styles.subtitle}>Lumière d&apos;Étoiles</p>
-        
         <div className={styles.buttons}>
           <button className={styles.enterBtn} onClick={handleEnterClick}>
             进入我的世界
           </button>
-          
-          {audioLoaded && (
-            <button 
-              className={`${styles.musicBtn} ${audioPlaying ? styles.playing : ''}`}
-              onClick={toggleMusic}
-            >
-              {audioPlaying ? '暂停音乐' : '播放音乐'}
-            </button>
-          )}
         </div>
       </div>
+
+      {/* 右下角漂浮音乐按钮 */}
+      <button
+        className={styles.musicBtn}
+        onClick={toggleMusic}
+      >
+        {audioPlaying ? '暂停音乐' : '播放音乐'}
+      </button>
     </div>
   );
 }

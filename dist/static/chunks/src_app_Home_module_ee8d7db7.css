@@ -81,6 +81,38 @@
   border-color: #add8e699;
 }
 
+.Home-module__jKgjFW__musicBtn {
+  z-index: 1000;
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(5px);
+  background-color: #000a1eb3;
+  border: 1px solid #fff3;
+  border-radius: 30px;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 20px;
+  font-size: .9rem;
+  transition: all .3s;
+  display: flex;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  box-shadow: 0 4px 15px #0003;
+}
+
+.Home-module__jKgjFW__musicBtn:before {
+  content: "♪";
+  margin-right: 8px;
+  font-size: 1.2rem;
+}
+
+.Home-module__jKgjFW__musicBtn:hover {
+  background-color: #1e2850b3;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px #0000004d;
+}
+
 @keyframes Home-module__jKgjFW__fadeIn {
   from {
     opacity: 0;

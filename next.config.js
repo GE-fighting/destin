@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export', // 将应用程序生成为静态HTML
   images: {
-    unoptimized: true, // 静态导出不支持图像优化
+    domains: [], // 如果你使用外部图片域名，需要在这里添加
   },
   distDir: 'dist', // 输出目录
   // 如果部署在非根目录

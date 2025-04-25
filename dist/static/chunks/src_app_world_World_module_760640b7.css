@@ -22,19 +22,28 @@
 }
 
 .World-module__6lpB6a__text {
-  text-shadow: 0 0 10px #ffffff4d;
   letter-spacing: 1px;
   box-sizing: border-box;
-  backdrop-filter: blur(5px);
-  background: #000a1e80;
-  border: 1px solid #ffffff1a;
-  border-radius: 10px;
+  backdrop-filter: blur(18px) saturate(1.2);
+  color: #eaf6ff;
+  text-shadow: 0 2px 16px #1e3c782e, 0 1px #fff2;
+  background: linear-gradient(135deg, #3c5ac82e 0%, #1e3c7852 100%);
+  border: none;
+  border-radius: 26px;
   width: 60%;
-  padding: 1.5rem;
+  padding: 1.7rem 2.2rem;
+  font-family: Segoe UI, PingFang SC, Hiragino Sans GB, Arial, sans-serif;
   font-size: clamp(1rem, 1.5vw, 1.2rem);
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.6;
   animation: 1s ease-in World-module__6lpB6a__fadeIn;
+  position: relative;
+  overflow: visible;
+  box-shadow: 0 8px 32px #1f268738, 0 2px 16px #4078e92e, 0 1.5px 8px #3a6abd99;
+}
+
+.World-module__6lpB6a__text:before, .World-module__6lpB6a__text:after {
+  display: none;
 }
 
 .World-module__6lpB6a__counter {
@@ -185,6 +194,32 @@
     bottom: 10px;
     right: 10px;
   }
+}
+
+.World-module__6lpB6a__backHomeBtn {
+  z-index: 1001;
+  color: #fff;
+  cursor: pointer;
+  letter-spacing: 1px;
+  backdrop-filter: blur(6px);
+  background: linear-gradient(135deg, #3a6abd 60%, #4169e1 100%);
+  border: none;
+  border-radius: 28px;
+  outline: none;
+  padding: 12px 28px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all .25s cubic-bezier(.4, 2, .6, 1);
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  box-shadow: 0 4px 18px #4078e92e, 0 1.5px 8px #3a6abd99;
+}
+
+.World-module__6lpB6a__backHomeBtn:hover {
+  background: linear-gradient(135deg, #4169e1 60%, #3a6abd 100%);
+  transform: translateY(-3px)scale(1.04);
+  box-shadow: 0 8px 32px #4078e938;
 }
 
 

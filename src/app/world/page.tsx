@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import styles from './World.module.css';
+import { useRouter } from 'next/navigation';
 
 interface Wheel {
   x: number;
@@ -81,7 +82,7 @@ interface Flower {
 }
 
 export default function World() {
-  // const router = useRouter();
+  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const textRef = useRef<HTMLDivElement | null>(null);
   const counterRef = useRef<HTMLDivElement | null>(null);
@@ -795,6 +796,9 @@ export default function World() {
           {audioPlaying ? '暂停音乐' : '播放音乐'}
         </button>
       )}
+      
+      {/* 回到主页按钮 */}
+      <button className={styles.backHomeBtn} onClick={() => router.push('/')}>回到主页</button>
       
       <canvas ref={canvasRef} className={styles.canvas} />
       

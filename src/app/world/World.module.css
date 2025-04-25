@@ -24,16 +24,25 @@
   font-size: clamp(1rem, 1.5vw, 1.2rem);
   line-height: 1.6;
   width: 60%;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: 1px;
-  padding: 1.5rem;
-  background: rgba(0, 10, 30, 0.5);
-  border-radius: 10px;
+  padding: 1.7rem 2.2rem;
+  background: linear-gradient(135deg, rgba(60,90,200,0.18) 0%, rgba(30,60,120,0.32) 100%);
+  border-radius: 26px;
   animation: fadeIn 1s ease-in;
   box-sizing: border-box;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(18px) saturate(1.2);
+  border: none;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.22), 0 2px 16px 0 rgba(64, 120, 233, 0.18), 0 1.5px 8px 0 #3a6abd99;
+  position: relative;
+  color: #eaf6ff;
+  text-shadow: 0 2px 16px rgba(30,60,120,0.18), 0 1px 0 #fff2;
+  overflow: visible;
+  font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Arial', sans-serif;
+}
+
+.text::before, .text::after {
+  display: none;
 }
 
 .counter {
@@ -186,4 +195,29 @@
     padding: 8px 15px;
     font-size: 0.8rem;
   }
+}
+
+.backHomeBtn {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 1001;
+  background: linear-gradient(135deg, #3a6abd 60%, #4169e1 100%);
+  color: #fff;
+  border: none;
+  border-radius: 28px;
+  padding: 12px 28px;
+  font-size: 1rem;
+  font-weight: 500;
+  box-shadow: 0 4px 18px 0 rgba(64,120,233,0.18), 0 1.5px 8px 0 #3a6abd99;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(.4,2,.6,1);
+  letter-spacing: 1px;
+  backdrop-filter: blur(6px);
+  outline: none;
+}
+.backHomeBtn:hover {
+  background: linear-gradient(135deg, #4169e1 60%, #3a6abd 100%);
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 8px 32px 0 rgba(64,120,233,0.22);
 } 

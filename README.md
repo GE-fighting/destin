@@ -20,6 +20,20 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Deployment with PM2
+
+To deploy this application using PM2:
+
+```bash
+# Build the application
+npm run build
+
+# Start with PM2
+pm2 start ecosystem.config.js
+```
+
+The application uses Next.js's built-in server functionality and does not require a custom Express server.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

@@ -2,7 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'destin',
-      script: 'server.js', // 使用我们的静态文件服务器
+      script: 'npm',
+      args: 'start',
       instances: 1, // 单个实例
       exec_mode: 'fork', // 从'cluster'改为'fork'模式，使用单进程
       watch: false,

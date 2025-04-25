@@ -45,52 +45,43 @@ function Home() {
     const [audioPlaying, setAudioPlaying] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRouter"])();
     // 页面加载后尝试播放音乐
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        const audio = audioRef.current;
-        if (audio && audioLoaded) {
-            // 尝试自动播放
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.then(()=>{
-                    // 自动播放成功
-                    setAudioPlaying(true);
-                    console.log("Audio playing automatically");
-                }).catch((err)=>{
-                    // 自动播放被阻止
-                    console.log("Audio autoplay was prevented:", err);
-                // 不要设置audioPlaying为true，因为实际上没有播放
-                });
-            }
-        }
-    }, [
-        audioLoaded
-    ]);
+    // useEffect(() => {
+    //   const audio = audioRef.current;
+    //   if (audio && audioLoaded) {
+    //     // 尝试自动播放
+    //     const playPromise = audio.play();
+    //     if (playPromise !== undefined) {
+    //       playPromise.then(() => {
+    //         setAudioPlaying(true);
+    //         console.log("Audio playing automatically");
+    //       }).catch(err => {
+    //         console.log("Audio autoplay was prevented:", err);
+    //       });
+    //     }
+    //   }
+    // }, [audioLoaded]);
     // 添加用户交互时的播放尝试
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        const handleUserInteraction = ()=>{
-            const audio = audioRef.current;
-            if (audio && !audioPlaying && audioLoaded) {
-                audio.play().then(()=>{
-                    setAudioPlaying(true);
-                    console.log("Audio playing after user interaction");
-                }).catch((err)=>{
-                    console.log("Audio play was prevented even after interaction:", err);
-                });
-            }
-        };
-        // 监听可能的用户交互事件
-        document.addEventListener('click', handleUserInteraction);
-        document.addEventListener('touchstart', handleUserInteraction);
-        document.addEventListener('keydown', handleUserInteraction);
-        return ()=>{
-            document.removeEventListener('click', handleUserInteraction);
-            document.removeEventListener('touchstart', handleUserInteraction);
-            document.removeEventListener('keydown', handleUserInteraction);
-        };
-    }, [
-        audioPlaying,
-        audioLoaded
-    ]);
+    // useEffect(() => {
+    //   const handleUserInteraction = () => {
+    //     const audio = audioRef.current;
+    //     if (audio && !audioPlaying && audioLoaded) {
+    //       audio.play().then(() => {
+    //         setAudioPlaying(true);
+    //         console.log("Audio playing after user interaction");
+    //       }).catch(err => {
+    //         console.log("Audio play was prevented even after interaction:", err);
+    //       });
+    //     }
+    //   };
+    //   document.addEventListener('click', handleUserInteraction);
+    //   document.addEventListener('touchstart', handleUserInteraction);
+    //   document.addEventListener('keydown', handleUserInteraction);
+    //   return () => {
+    //     document.removeEventListener('click', handleUserInteraction);
+    //     document.removeEventListener('touchstart', handleUserInteraction);
+    //     document.removeEventListener('keydown', handleUserInteraction);
+    //   };
+    // }, [audioPlaying, audioLoaded]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         // Store current canvas ref at the beginning of the effect
         const currentCanvas = canvasRef.current;
@@ -853,9 +844,11 @@ function Home() {
         let personPathProgress = 0;
         const pathSpeed = 0.00001; // 路径行走速度，从0.00005进一步减慢到0.00001
         // 添加对话气泡相关变量
-        let showDialog = false;
+        let dialogState = 0; // 0:无, 1:第一个, 2:第二个, 3:全部结束
         let dialogTimer = 0;
-        const dialogDuration = 5; // 对话显示5秒
+        const dialogDuration = 5; // 第一个气泡显示5秒
+        let secondDialogTimer = 0;
+        const secondDialogDuration = 3; // 第二个气泡显示3秒
         // 创建对话气泡
         const dialogGroup = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Group"]();
         // 创建气泡背景 - Instagram风格
@@ -950,29 +943,28 @@ function Home() {
             // 检查是否到达福州景点
             const fuzhouReached = personPathProgress > fuzhouScenePointIndex / points.length - 0.01 && personPathProgress < fuzhouScenePointIndex / points.length + 0.01;
             // 人物沿路径移动 - 在福州景点位置停下
-            if (!fuzhouReached) {
+            if (!fuzhouReached || dialogState === 3) {
                 personPathProgress += pathSpeed * deltaTime * 1000;
                 if (personPathProgress > 1) {
                     personPathProgress = 0;
                 }
-            } else if (!showDialog) {
-                // 到达福州景点并且还没显示过对话
-                showDialog = true;
+            } else if (dialogState === 0) {
+                // 显示第一个气泡
+                dialogState = 1;
                 dialogGroup.visible = true;
+                bubble.material.map = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CanvasTexture"](createDialogBubble("福州，我们来了~"));
+                bubble.material.opacity = 0.95;
+                dialogTimer = 0;
                 // 放置对话气泡在人物右上方
                 const dialogPos = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Vector3"](person1.position.x + (person2.position.x - person1.position.x) / 2, 0, person1.position.z + (person2.position.z - person1.position.z) / 2);
-                // 计算人物朝向的右上方位置
                 const tangent = curve.getTangentAt(personPathProgress);
                 const right = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Vector3"](-tangent.z, 0, tangent.x).normalize().multiplyScalar(3);
                 dialogGroup.position.copy(dialogPos);
-                // 向右上方偏移
                 dialogGroup.position.add(right);
-                dialogGroup.position.y = 4.5; // 位置上移
-                // 气泡出现动画
+                dialogGroup.position.y = 4.5;
                 dialogGroup.scale.set(0.1, 0.1, 0.1);
-                const targetScale = 1.3; // 最终缩放比例
+                const targetScale = 1.3;
                 scene.userData.animateFunctions = scene.userData.animateFunctions || [];
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 scene.userData.animateFunctions.push((_time)=>{
                     if (dialogGroup.scale.x < targetScale) {
                         dialogGroup.scale.x += 0.05;
@@ -980,18 +972,54 @@ function Home() {
                         dialogGroup.scale.z += 0.05;
                     }
                 });
-                // 气泡轻微摆动动画
                 scene.userData.animateFunctions.push((time)=>{
                     if (dialogGroup.visible) {
                         dialogGroup.rotation.z = Math.sin(time * 0.5) * 0.05;
                         dialogGroup.position.y = 4.5 + Math.sin(time * 0.7) * 0.1;
                     }
                 });
-                // 让对话框面向相机
+                dialogGroup.lookAt(camera.position);
+            }
+            // 第一个气泡计时与淡出
+            if (dialogState === 1) {
+                dialogTimer += deltaTime;
+                if (dialogTimer > dialogDuration) {
+                    bubble.material.opacity -= 0.01;
+                    if (bubble.material.opacity <= 0) {
+                        dialogState = 2;
+                        dialogGroup.visible = false;
+                        secondDialogTimer = 0;
+                    }
+                }
+                dialogGroup.lookAt(camera.position);
+            }
+            // 第二个气泡显示与淡出
+            if (dialogState === 2) {
+                if (!dialogGroup.visible) {
+                    dialogGroup.visible = true;
+                    bubble.material.map = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CanvasTexture"](createDialogBubble("让我们继续出发吧~"));
+                    bubble.material.opacity = 0.95;
+                    // 位置同第一个气泡
+                    const dialogPos = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Vector3"](person1.position.x + (person2.position.x - person1.position.x) / 2, 0, person1.position.z + (person2.position.z - person1.position.z) / 2);
+                    const tangent = curve.getTangentAt(personPathProgress);
+                    const right = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Vector3"](-tangent.z, 0, tangent.x).normalize().multiplyScalar(3);
+                    dialogGroup.position.copy(dialogPos);
+                    dialogGroup.position.add(right);
+                    dialogGroup.position.y = 4.5;
+                    dialogGroup.scale.set(1.3, 1.3, 1.3);
+                }
+                secondDialogTimer += deltaTime;
+                if (secondDialogTimer > secondDialogDuration) {
+                    bubble.material.opacity -= 0.01;
+                    if (bubble.material.opacity <= 0) {
+                        dialogGroup.visible = false;
+                        dialogState = 3; // 允许人物继续前进
+                    }
+                }
                 dialogGroup.lookAt(camera.position);
             }
             // 管理对话的显示时间
-            if (showDialog) {
+            if (dialogState === 0) {
                 dialogTimer += deltaTime;
                 // 对话显示时间结束后，继续移动
                 if (dialogTimer > dialogDuration) {
@@ -1511,44 +1539,6 @@ function Home() {
             setAudioPlaying(true);
         }
     };
-    // 在组件挂载时创建音频元素
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        // 检查audioRef是否已经有值
-        if (!audioRef.current) {
-            const audioElement = new Audio("/music/M500000vyP282Pn71W.mp3");
-            audioElement.loop = true;
-            // 设置预加载
-            audioElement.preload = "auto";
-            // 设置加载事件
-            audioElement.addEventListener('loadeddata', ()=>{
-                console.log("音频已加载");
-                setAudioLoaded(true);
-                // 尝试自动播放
-                try {
-                    const playPromise = audioElement.play();
-                    if (playPromise !== undefined) {
-                        playPromise.then(()=>{
-                            console.log("音频自动播放成功");
-                            setAudioPlaying(true);
-                        }).catch((err)=>{
-                            console.log("音频自动播放被阻止:", err);
-                        });
-                    }
-                } catch (e) {
-                    console.log("音频播放出错:", e);
-                }
-            });
-            audioRef.current = audioElement;
-        }
-        // 组件卸载时处理音频
-        return ()=>{
-            const audioElement = audioRef.current;
-            if (audioElement) {
-                audioElement.pause();
-                audioElement.src = "";
-            }
-        };
-    }, []);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$Home$2e$module$2e$css__$5b$app$2d$ssr$5d$__$28$css__module$29$__["default"].container,
         children: [
@@ -1557,7 +1547,21 @@ function Home() {
                 className: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$Home$2e$module$2e$css__$5b$app$2d$ssr$5d$__$28$css__module$29$__["default"].canvas
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 1827,
+                lineNumber: 1809,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("audio", {
+                ref: audioRef,
+                src: "/music/M500000vyP282Pn71W.mp3",
+                loop: true,
+                preload: "auto",
+                style: {
+                    display: 'none'
+                },
+                onCanPlayThrough: ()=>setAudioLoaded(true)
+            }, void 0, false, {
+                fileName: "[project]/src/app/page.tsx",
+                lineNumber: 1812,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1568,7 +1572,7 @@ function Home() {
                         children: "遇见 Destin"
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 1830,
+                        lineNumber: 1822,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1576,46 +1580,44 @@ function Home() {
                         children: "Lumière d'Étoiles"
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 1831,
+                        lineNumber: 1823,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$Home$2e$module$2e$css__$5b$app$2d$ssr$5d$__$28$css__module$29$__["default"].buttons,
-                        children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                className: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$Home$2e$module$2e$css__$5b$app$2d$ssr$5d$__$28$css__module$29$__["default"].enterBtn,
-                                onClick: handleEnterClick,
-                                children: "进入我的世界"
-                            }, void 0, false, {
-                                fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 1834,
-                                columnNumber: 11
-                            }, this),
-                            audioLoaded && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                className: `${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$Home$2e$module$2e$css__$5b$app$2d$ssr$5d$__$28$css__module$29$__["default"].musicBtn} ${audioPlaying ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$Home$2e$module$2e$css__$5b$app$2d$ssr$5d$__$28$css__module$29$__["default"].playing : ''}`,
-                                onClick: toggleMusic,
-                                children: audioPlaying ? '暂停音乐' : '播放音乐'
-                            }, void 0, false, {
-                                fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 1839,
-                                columnNumber: 13
-                            }, this)
-                        ]
-                    }, void 0, true, {
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                            className: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$Home$2e$module$2e$css__$5b$app$2d$ssr$5d$__$28$css__module$29$__["default"].enterBtn,
+                            onClick: handleEnterClick,
+                            children: "进入我的世界"
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/page.tsx",
+                            lineNumber: 1825,
+                            columnNumber: 11
+                        }, this)
+                    }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 1833,
+                        lineNumber: 1824,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 1829,
+                lineNumber: 1821,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                className: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$Home$2e$module$2e$css__$5b$app$2d$ssr$5d$__$28$css__module$29$__["default"].musicBtn,
+                onClick: toggleMusic,
+                children: audioPlaying ? '暂停音乐' : '播放音乐'
+            }, void 0, false, {
+                fileName: "[project]/src/app/page.tsx",
+                lineNumber: 1832,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/page.tsx",
-        lineNumber: 1826,
+        lineNumber: 1808,
         columnNumber: 5
     }, this);
 }
